@@ -1,0 +1,4 @@
+gocms
+_postgres_data
+vendor
+.env
