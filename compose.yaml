@@ -3,13 +3,12 @@ version: "3"
 services:
   postgres:
     image: postgres:latest
-    container_name: postgreSQL
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - ./_postgreSQL:/var/lib/postgresql/data
+      - ./_postgres_data:/var/lib/postgresql/data
     ports:
       - target: 5432
         published: ${DB_PORT}
