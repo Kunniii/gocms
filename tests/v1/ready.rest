@@ -1,0 +1,15 @@
+@host=http://localhost:3000/v1
+
+
+###
+
+GET {{host}}/ready
+
+###
+
+GET {{host}}/users/ready
+
+###
+
+GET {{host}}/posts/ready
+

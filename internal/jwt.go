@@ -3,17 +3,21 @@ package internal
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
+	itypes "github.com/Kunniii/gocms/internal/types"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var JWT_KEY = []byte(os.Getenv("JWT_KEY"))
 
-func CreateToken() (string, error) {
+func CreateToken(claims itypes.UserClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"expires": time.Now().Add(time.Hour * 24).Unix(),
+		"UserID":   claims.UserID,
+		"RoleID":   claims.RoleID,
+		"Email":    claims.Email,
+		"UserName": claims.UserName,
+		"exp":      time.Now().Add(time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString(JWT_KEY)
 	if err != nil {
@@ -22,20 +26,26 @@ func CreateToken() (string, error) {
 	return tokenString, nil
 }
 
-func VerifyToken(tokenString string) error {
-	tokenString = strings.Split(tokenString, " ")[1]
-	fmt.Println(tokenString)
+func ParseToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return JWT_KEY, nil
 	})
-
 	if err != nil {
-		return err
+		return nil, err
+	}
+	return token, nil
+}
+
+func VerifyToken(tokenString string) (*jwt.Token, bool, error) {
+	tokenString = tokenString[len("Bearer "):]
+	token, err := ParseToken(tokenString)
+	if err != nil {
+		return nil, false, err
 	}
 
 	if !token.Valid {
-		return fmt.Errorf("invalid token")
+		return nil, false, fmt.Errorf("invalid token")
 	}
 
-	return nil
+	return token, true, nil
 }

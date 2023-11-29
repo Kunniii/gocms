@@ -13,15 +13,14 @@ func init() {
 }
 
 func main() {
-	var models = []interface{}{
+	var dbModels = []interface{}{
 		&models.Comment{},
 		&models.Post{},
-		&models.Role{},
 		&models.Tag{},
 		&models.User{},
 	}
 
-	if err := internal.DB.AutoMigrate(models...); err != nil {
+	if err := internal.DB.AutoMigrate(dbModels...); err != nil {
 		log.Fatal(err)
 	} else {
 		log.Println("Database migration successfully!")

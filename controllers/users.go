@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Kunniii/gocms/internal"
+	itypes "github.com/Kunniii/gocms/internal/types"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgerrcode"
@@ -21,11 +22,10 @@ func Register(context *gin.Context) {
 	}
 
 	if context.Bind(&reqBody) != nil {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"OK":  false,
-			"msg": "Make sure to put the JSON key as String",
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"Message": "Make sure to put the JSON key as String and no trailing commas",
 		})
-		return
 	}
 
 	// hash user's password
@@ -33,27 +33,34 @@ func Register(context *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		context.JSON(http.StatusInternalServerError, gin.H{
-			"OK":  false,
-			"msg": "Password hashing error!",
+			"OK":      false,
+			"Message": "Password hashing error!",
 		})
 		return
 	}
 
-	user := models.User{UserName: reqBody.UserName, Email: reqBody.Email, Password: string(hashByte)}
+	// by default, user is registered as normal user
+	// with id = 0
+	user := models.User{
+		UserName: reqBody.UserName,
+		Email:    reqBody.Email,
+		Password: string(hashByte),
+		RoleID:   itypes.Roles[0].ID,
+	}
 
 	if result := internal.DB.Create(&user); result.Error != nil {
 		err := result.Error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			context.JSON(http.StatusBadRequest, gin.H{
-				"OK":  false,
-				"msg": "Email already exists!",
+				"OK":      false,
+				"Message": "Email already exists!",
 			})
 			return
 		} else {
 			context.JSON(http.StatusInternalServerError, gin.H{
-				"OK":  false,
-				"msg": "Cannot create user!",
+				"OK":      false,
+				"Message": "Cannot create user!",
 			})
 			return
 		}
@@ -71,20 +78,18 @@ func Login(context *gin.Context) {
 	}
 
 	if err := context.Bind(&reqBody); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"OK":  false,
-			"msg": "Make sure to put JSON key as String!",
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"Message": "Make sure to put the JSON key as String and no trailing commas",
 		})
-		return
 	}
-
 	var user models.User
 	result := internal.DB.First(&user, "email = ?", reqBody.Email)
 
 	if result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
-			"OK":  false,
-			"msg": "Invalid credential!",
+			"OK":      false,
+			"Message": "Invalid credential!",
 		})
 		return
 	}
@@ -92,28 +97,37 @@ func Login(context *gin.Context) {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(reqBody.Password))
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
-			"OK":  false,
-			"msg": "Invalid credential!",
+			"OK":      false,
+			"Message": "Invalid credential!",
 		})
 		return
 	}
 
-	tokenString, err := internal.CreateToken()
+	tokenString, err := internal.CreateToken(itypes.UserClaims{
+		UserID:   user.ID,
+		RoleID:   user.RoleID,
+		Email:    user.Email,
+		UserName: user.UserName,
+	})
+
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
-			"OK":  false,
-			"msg": "Cannot generate token!",
+			"OK":      false,
+			"Message": "Cannot generate token!",
 		})
 	} else {
 		context.JSON(http.StatusOK, gin.H{
 			"OK":    true,
-			"token": "Bearer " + tokenString,
+			"Token": "Bearer " + tokenString,
 		})
 	}
 }
 
-func Validate(context *gin.Context) {
-	context.JSON(http.StatusOK, gin.H{
-		"OK": true,
-	})
+func Verify(context *gin.Context) {
+	if data, ok := context.Get("user-data"); ok {
+		context.JSON(http.StatusOK, gin.H{
+			"OK":   true,
+			"User": data,
+		})
+	}
 }
