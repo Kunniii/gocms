@@ -13,7 +13,7 @@ func CheckAuth(context *gin.Context) {
 	if authorization == "" {
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"OK":      false,
-			"Message": "Unauthorized",
+			"message": "Unauthorized",
 		})
 	}
 
@@ -21,7 +21,7 @@ func CheckAuth(context *gin.Context) {
 		log.Println(err)
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"OK":      false,
-			"Message": "Unauthorized",
+			"message": "Unauthorized",
 		})
 	} else {
 		context.Set("user-data", token.Claims)

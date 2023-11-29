@@ -24,7 +24,7 @@ func Register(context *gin.Context) {
 	if context.Bind(&reqBody) != nil {
 		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
-			"Message": "Make sure to put the JSON key as String and no trailing commas",
+			"message": "Make sure to put the JSON key as String and no trailing commas",
 		})
 	}
 
@@ -34,7 +34,7 @@ func Register(context *gin.Context) {
 		log.Println(err)
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"OK":      false,
-			"Message": "Password hashing error!",
+			"message": "Password hashing error!",
 		})
 		return
 	}
@@ -54,13 +54,13 @@ func Register(context *gin.Context) {
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 			context.JSON(http.StatusBadRequest, gin.H{
 				"OK":      false,
-				"Message": "Email already exists!",
+				"message": "Email already exists!",
 			})
 			return
 		} else {
 			context.JSON(http.StatusInternalServerError, gin.H{
 				"OK":      false,
-				"Message": "Cannot create user!",
+				"message": "Cannot create user!",
 			})
 			return
 		}
@@ -80,7 +80,7 @@ func Login(context *gin.Context) {
 	if err := context.Bind(&reqBody); err != nil {
 		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
-			"Message": "Make sure to put the JSON key as String and no trailing commas",
+			"message": "Make sure to put the JSON key as String and no trailing commas",
 		})
 	}
 	var user models.User
@@ -89,7 +89,7 @@ func Login(context *gin.Context) {
 	if result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
-			"Message": "Invalid credential!",
+			"message": "Invalid credential!",
 		})
 		return
 	}
@@ -98,7 +98,7 @@ func Login(context *gin.Context) {
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
-			"Message": "Invalid credential!",
+			"message": "Invalid credential!",
 		})
 		return
 	}
@@ -113,7 +113,7 @@ func Login(context *gin.Context) {
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{
 			"OK":      false,
-			"Message": "Cannot generate token!",
+			"message": "Cannot generate token!",
 		})
 	} else {
 		context.JSON(http.StatusOK, gin.H{
