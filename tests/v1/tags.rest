@@ -1,0 +1,13 @@
+@host=http://localhost:3000/v1/tags
+
+
+###
+
+POST {{host}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6Imt1bm5paWlAY29kZWNob3Z1aS5kZXYiLCJSb2xlSUQiOjAsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJLdW5uaWlpIiwiZXhwIjoxNzAxNzAyNDA5fQ.MfkYIjDNOHibRx52gnmfAGZoRpe_4aTbVm8JLkmdIcI
+
+{
+  "Name": "Unkown"
+}

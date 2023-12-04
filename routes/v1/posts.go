@@ -3,6 +3,8 @@ package v1
 import (
 	"net/http"
 
+	"github.com/Kunniii/gocms/controllers"
+	"github.com/Kunniii/gocms/middlewares"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,4 +14,12 @@ func UsePostsRouter(router *gin.RouterGroup) {
 			"OK": true,
 		})
 	})
+
+	router.POST("/", middlewares.CheckAuth, controllers.CreatePost)
+	router.GET("/", controllers.GetAllPosts)
+
+	router.GET("/:id", controllers.GetPostById)
+	router.PUT("/:id", middlewares.CheckAuth, controllers.UpdatePost)
+	router.DELETE("/:id", middlewares.CheckAuth, controllers.DeletePostById)
+
 }
