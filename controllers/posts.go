@@ -6,6 +6,7 @@ import (
 	"github.com/Kunniii/gocms/internal"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func CreatePost(context *gin.Context) {
@@ -24,7 +25,28 @@ func CreatePost(context *gin.Context) {
 		return
 	}
 
-	post := models.Post{Title: reqBody.Body, Body: reqBody.Body}
+	authToken := context.GetString("auth-token")
+	token, _, _ := internal.VerifyToken(authToken)
+	userClaims := token.Claims.(jwt.MapClaims)
+	userId := uint(userClaims["UserID"].(float64))
+
+	// if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
+	// 	context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+	// 		"OK":      false,
+	// 		"message": "Forbidden",
+	// 	})
+	// 	return
+	// }
+
+	var tags []*models.Tag
+	internal.DB.Find(&tags, reqBody.Tags)
+
+	post := models.Post{
+		Title:  reqBody.Title,
+		Body:   reqBody.Body,
+		UserID: userId,
+		Tags:   tags,
+	}
 
 	result := internal.DB.Create(&post)
 
@@ -44,7 +66,10 @@ func CreatePost(context *gin.Context) {
 
 func GetAllPosts(context *gin.Context) {
 	var posts []models.Post
-	internal.DB.Find(&posts)
+
+	internal.DB.Model(&models.Post{}).Preload("Tags").Preload("User").Find(&posts)
+
+	// internal.DB.Find(&posts)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
@@ -57,7 +82,7 @@ func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 
 	var post models.Post
-	if result := internal.DB.First(&post, id); result.Error != nil {
+	if err := internal.DB.Model(&models.Post{}).Preload("Tags").First(&post, id).Error; err != nil {
 		context.JSON(http.StatusNotFound, gin.H{
 			"OK":      false,
 			"message": "Not found!",
@@ -85,6 +110,11 @@ func UpdatePost(context *gin.Context) {
 		})
 		return
 	}
+
+	// authToken := context.GetString("auth-token")
+	// token, _, _ := internal.VerifyToken(authToken)
+	// userClaims := token.Claims.(jwt.MapClaims)
+	// userId := uint(userClaims["UserID"].(float64))
 
 	var post models.Post
 	if result := internal.DB.First(&post, id); result.Error != nil {

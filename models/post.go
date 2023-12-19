@@ -6,10 +6,9 @@ import (
 
 type Post struct {
 	gorm.Model
-	AuthorID uint
-	Author   User
-	Tags     []Tag `gorm:"many2many:post_tags;"`
-	Comments []Comment
+	UserID   uint
+	Tags     []*Tag     `gorm:"many2many:posts_tags;"`
+	Comments []*Comment `gorm:"many2many:posts_comments;"`
 	Title    string
 	Like     uint
 	Body     string
