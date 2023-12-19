@@ -9,10 +9,33 @@ import (
 	itypes "github.com/Kunniii/gocms/internal/types"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func CreateAdmin(user *models.User) {
+	hashByte, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal("Cannot generate Admin password!")
+	}
+
+	user.Password = string(hashByte)
+
+	if result := internal.DB.Create(user); result.Error != nil {
+		err := result.Error
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			log.Println("Admin email already exists")
+			return
+		} else {
+			log.Fatal("Cannot create admin user!")
+			return
+		}
+	}
+
+}
 
 func Register(context *gin.Context) {
 	var reqBody struct {
@@ -124,10 +147,32 @@ func Login(context *gin.Context) {
 }
 
 func Verify(context *gin.Context) {
-	if data, ok := context.Get("user-data"); ok {
-		context.JSON(http.StatusOK, gin.H{
-			"OK":   true,
-			"User": data,
-		})
-	}
+	context.JSON(http.StatusOK, gin.H{
+		"OK": true,
+	})
+}
+
+func Me(context *gin.Context) {
+
+	authToken := context.GetString("auth-token")
+	token, _, _ := internal.VerifyToken(authToken)
+	userClaims := token.Claims.(jwt.MapClaims)
+	userId := uint(userClaims["UserID"].(float64))
+
+	var user models.User
+	internal.DB.Model(&models.User{}).Preload("Posts").First(&user, userId)
+
+	context.JSON(http.StatusOK, gin.H{
+		"OK": true,
+		"User": gin.H{
+			"ID":        user.ID,
+			"CreatedAt": user.CreatedAt,
+			"UpdatedAt": user.UpdatedAt,
+			"UserName":  user.UserName,
+			"Email":     user.Email,
+			"RoleID":    user.RoleID,
+			"Posts":     user.Posts,
+		},
+	})
+
 }

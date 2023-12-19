@@ -18,4 +18,5 @@ func UseUsersRouter(router *gin.RouterGroup) {
 	router.POST("/register", controllers.Register)
 	router.POST("/login", controllers.Login)
 	router.POST("/verify", middlewares.CheckAuth, controllers.Verify)
+	router.POST("/me", middlewares.CheckAuth, controllers.Me)
 }

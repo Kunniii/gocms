@@ -8,4 +8,5 @@ type User struct {
 	Email    string `gorm:"unique"`
 	Password string
 	RoleID   uint
+	Posts    []Post
 }
