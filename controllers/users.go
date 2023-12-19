@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm/clause"
 )
 
 func CreateAdmin(user *models.User) {
@@ -23,7 +24,7 @@ func CreateAdmin(user *models.User) {
 
 	user.Password = string(hashByte)
 
-	if result := internal.DB.Create(user); result.Error != nil {
+	if result := internal.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(user); result.Error != nil {
 		err := result.Error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
