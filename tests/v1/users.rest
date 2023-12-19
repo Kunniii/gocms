@@ -29,5 +29,23 @@ Accept: application/json
 POST {{host}}/verify
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6Imt1bm5paWlAY29kZWNob3Z1aS5kZXYiLCJSb2xlSUQiOjAsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJLdW5uaWlpIiwiZXhwIjoxNzAxNzAyNDA5fQ.MfkYIjDNOHibRx52gnmfAGZoRpe_4aTbVm8JLkmdIcI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzAwMDYzMH0.xS7xydpsXwARrrK4Qvoeoxes9oF3Tt4-EuhQQIjeWOo
+###
 
+POST {{host}}/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzAwMDYzMH0.xS7xydpsXwARrrK4Qvoeoxes9oF3Tt4-EuhQQIjeWOo
+
+###
+
+POST {{host}}/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "Email": "admin@local.host",
+  "Password": "admin@123"
+}
+
+###
