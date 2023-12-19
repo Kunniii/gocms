@@ -1,5 +1,5 @@
 @host=http://localhost:3000/v1/posts
-@token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzAwMDUwMn0.mvvBqW1ioDjdpJP2WzQmf0lp6_jWC1GDyccsGBVCI7Y
+@token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzAwNTgwNH0.7Nrhir6Lz_QomP05Rl_xiaEUIXlqPu0hyCBzO1ezK2c
 
 ###
 POST http://localhost:3000/v1/users/login
@@ -7,8 +7,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "Email": "kunniii@codechovui.dev",
-  "Password": "1234@asdf"
+  "Email": "admin@local.host",
+  "Password": "admin@123"
 }
 
 ###
@@ -32,3 +32,15 @@ GET {{host}}/
 ###
 
 GET {{host}}/1
+
+###
+
+PUT {{host}}/1
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "Title":"I changed this",
+  "Body": "JELLO",
+  "Tags": [1]
+}

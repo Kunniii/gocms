@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Kunniii/gocms/internal"
@@ -14,7 +15,7 @@ func CreatePost(context *gin.Context) {
 	var reqBody struct {
 		Title string
 		Body  string
-		Tags  []int
+		Tags  []uint
 	}
 
 	if err := context.Bind(&reqBody); err != nil {
@@ -30,13 +31,13 @@ func CreatePost(context *gin.Context) {
 	userClaims := token.Claims.(jwt.MapClaims)
 	userId := uint(userClaims["UserID"].(float64))
 
-	// if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
-	// 	context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-	// 		"OK":      false,
-	// 		"message": "Forbidden",
-	// 	})
-	// 	return
-	// }
+	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
 
 	var tags []*models.Tag
 	internal.DB.Find(&tags, reqBody.Tags)
@@ -69,8 +70,6 @@ func GetAllPosts(context *gin.Context) {
 
 	internal.DB.Model(&models.Post{}).Preload("Tags").Preload("User").Find(&posts)
 
-	// internal.DB.Find(&posts)
-
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
 		"data": posts,
@@ -101,6 +100,7 @@ func UpdatePost(context *gin.Context) {
 	var reqBody struct {
 		Title string
 		Body  string
+		Tags  []uint
 	}
 
 	if err := context.Bind(&reqBody); err != nil {
@@ -111,10 +111,21 @@ func UpdatePost(context *gin.Context) {
 		return
 	}
 
-	// authToken := context.GetString("auth-token")
-	// token, _, _ := internal.VerifyToken(authToken)
-	// userClaims := token.Claims.(jwt.MapClaims)
-	// userId := uint(userClaims["UserID"].(float64))
+	authToken := context.GetString("auth-token")
+	token, _, _ := internal.VerifyToken(authToken)
+	userClaims := token.Claims.(jwt.MapClaims)
+	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
+
+	var tags []*models.Tag
+	if len(reqBody.Tags) > 0 {
+		internal.DB.Find(&tags, reqBody.Tags)
+	}
 
 	var post models.Post
 	if result := internal.DB.First(&post, id); result.Error != nil {
@@ -130,6 +141,10 @@ func UpdatePost(context *gin.Context) {
 		Title: reqBody.Title,
 		Body:  reqBody.Body,
 	})
+
+	if err := internal.DB.Model(&post).Association("Tags").Replace(tags); err != nil {
+		log.Println(err)
+	}
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
@@ -150,4 +165,9 @@ func DeletePostById(context *gin.Context) {
 			"OK": true,
 		})
 	}
+}
+
+func AddComment(context *gin.Context) {
+	// id := context.Param("id")
+
 }
