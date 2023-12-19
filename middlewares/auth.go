@@ -17,14 +17,14 @@ func CheckAuth(context *gin.Context) {
 		})
 	}
 
-	if token, ok, err := internal.VerifyToken(authorization); !ok {
+	if _, ok, err := internal.VerifyToken(authorization); !ok {
 		log.Println(err)
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"OK":      false,
 			"message": "Unauthorized",
 		})
 	} else {
-		context.Set("user-data", token.Claims)
+		context.Set("auth-token", authorization)
 		context.Next()
 	}
 
