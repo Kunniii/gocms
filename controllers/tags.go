@@ -21,17 +21,20 @@ func CreateTag(context *gin.Context) {
 		return
 	}
 
-	tag := models.Tag{Name: reqBody.Name}
+	var tag models.Tag
+	result := internal.DB.First(&tag, "Name = ?", reqBody.Name)
 
-	result := internal.DB.Create(&tag)
-
-	if result.Error != nil {
+	if result.Error == nil {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
 			"message": "Could not create Tag!",
 		})
 		return
 	}
+
+	tag = models.Tag{Name: reqBody.Name}
+
+	internal.DB.Create(&tag)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
