@@ -6,9 +6,22 @@ import (
 	"github.com/Kunniii/gocms/internal"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func CreateTag(context *gin.Context) {
+
+	authToken := context.GetString("auth-token")
+	token, _, _ := internal.VerifyToken(authToken)
+	userClaims := token.Claims.(jwt.MapClaims)
+	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 2 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
+
 	var reqBody struct {
 		Name string
 	}
@@ -42,6 +55,7 @@ func CreateTag(context *gin.Context) {
 	})
 
 }
+
 func GetAllTags(context *gin.Context) {
 	var tags []models.Tag
 	internal.DB.Find(&tags)
@@ -52,6 +66,7 @@ func GetAllTags(context *gin.Context) {
 	})
 
 }
+
 func GetTagById(context *gin.Context) {
 	id := context.Param("id")
 
@@ -69,7 +84,20 @@ func GetTagById(context *gin.Context) {
 		})
 	}
 }
+
 func UpdateTag(context *gin.Context) {
+
+	authToken := context.GetString("auth-token")
+	token, _, _ := internal.VerifyToken(authToken)
+	userClaims := token.Claims.(jwt.MapClaims)
+	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 2 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
+
 	id := context.Param("id")
 
 	var reqBody struct {
@@ -103,6 +131,7 @@ func UpdateTag(context *gin.Context) {
 		"data": tag,
 	})
 }
+
 func DeleteTagById(context *gin.Context) {
 	id := context.Param("id")
 
