@@ -1,5 +1,5 @@
 @host=http://localhost:3000/v1/posts
-@token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzAwNTgwNH0.7Nrhir6Lz_QomP05Rl_xiaEUIXlqPu0hyCBzO1ezK2c
+@token=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6ImFkbWluQGxvY2FsLmhvc3QiLCJSb2xlSUQiOjQsIlVzZXJJRCI6MSwiVXNlck5hbWUiOiJhZG1pbiIsImV4cCI6MTcwMzI2OTQxN30.fAeDO0iAAa4jdSXZceFiSgpeOhgMF7QXnBCRoYRHExU
 
 ###
 POST http://localhost:3000/v1/users/login
@@ -14,15 +14,13 @@ Accept: application/json
 ###
 
 POST {{host}}/
-Content-Type: application/json
+Content-Type: application/json;charset=utf-8
 Authorization: {{token}}
+Accept: application/json;charset=utf-8
 
 {
   "Title": "My post wit tag!",
-  "Body": "<h1>Welcome</h1>",
-  "Tags": [
-    1, 2, 3, 4
-  ]
+  "Body": "<h1>Hello World!</h1>"
 }
 
 ###
@@ -31,16 +29,14 @@ GET {{host}}/
 
 ###
 
-GET {{host}}/1
+GET {{host}}/2
 
 ###
 
-PUT {{host}}/1
+PUT {{host}}/2
 Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "Title":"I changed this",
-  "Body": "JELLO",
-  "Tags": [1]
+  "Tags": []
 }
