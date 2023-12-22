@@ -40,7 +40,7 @@ func CreateTag(context *gin.Context) {
 	if result.Error == nil {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
-			"message": "Could not create Tag!",
+			"message": "Tag already exists!",
 		})
 		return
 	}

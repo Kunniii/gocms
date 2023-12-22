@@ -39,8 +39,11 @@ func CreatePost(context *gin.Context) {
 		return
 	}
 
-	var tags []*models.Tag
+	var tags []models.Tag
 	internal.DB.Find(&tags, reqBody.Tags)
+
+	var user models.User
+	internal.DB.First(&user, userId)
 
 	post := models.Post{
 		Title:  reqBody.Title,
@@ -68,7 +71,7 @@ func CreatePost(context *gin.Context) {
 func GetAllPosts(context *gin.Context) {
 	var posts []models.Post
 
-	internal.DB.Model(&models.Post{}).Preload("Tags").Preload("User").Find(&posts)
+	internal.DB.Model(&models.Post{}).Preload("Tags").Preload("Comments").Find(&posts)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,

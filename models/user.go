@@ -9,4 +9,5 @@ type User struct {
 	Password string
 	RoleID   uint
 	Posts    []Post
+	Comments []Comment
 }
