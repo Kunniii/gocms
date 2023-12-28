@@ -23,11 +23,13 @@ func main() {
 		&models.User{},
 	}
 
-	if err := internal.DB.AutoMigrate(dbModels...); err != nil {
-		log.Fatal(err)
-	} else {
-		log.Println("Database migration successfully!")
+	for _, model := range dbModels {
+		if err := internal.DB.AutoMigrate(model); err != nil {
+			log.Fatal(err)
+		}
 	}
+
+	log.Println("Database migration successfully!")
 
 	adminEmail := os.Getenv("DEFAULT_ADMIN_EMAIL")
 	adminUsername := os.Getenv("DEFAULT_ADMIN_USERNAME")
