@@ -49,3 +49,9 @@ func VerifyToken(tokenString string) (*jwt.Token, bool, error) {
 
 	return token, true, nil
 }
+
+func GetClaims(authToken string) jwt.MapClaims {
+	token, _, _ := VerifyToken(authToken)
+	claims := token.Claims.(jwt.MapClaims)
+	return claims
+}
