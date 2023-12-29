@@ -19,7 +19,7 @@ func UseTagRouter(router *gin.RouterGroup) {
 	router.GET("/", controllers.GetAllTags)
 
 	router.GET("/:id", controllers.GetTagById)
-	router.PUT("/:id", middlewares.CheckAuth, controllers.UpdateTag)
+	router.PATCH("/:id", middlewares.CheckAuth, controllers.UpdateTag)
 	router.DELETE("/:id", middlewares.CheckAuth, controllers.DeleteTagById)
 
 }

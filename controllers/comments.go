@@ -1,15 +1,39 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"log"
 
-func CreateComment(context *gin.Context) {
+	"github.com/Kunniii/gocms/internal"
+	"github.com/Kunniii/gocms/models"
+)
 
+func CreateComment(userID uint, postID uint, body string) (*models.Comment, bool) {
+	var comment = models.Comment{
+		UserID: userID,
+		PostID: postID,
+		Body:   body,
+	}
+
+	if err := internal.DB.Create(&comment).Error; err != nil {
+		log.Println(err)
+		return nil, false
+	}
+
+	return &comment, true
 }
 
-func DeleteComment(context *gin.Context) {
-
+func DeleteComment(commentID uint, userID uint) bool {
+	// find the comment with id
+	// compare with userID
+	return true
 }
 
-func UpdateComment(context *gin.Context) {
+func UpdateComment(commentID uint, body string) (*models.Comment, bool) {
+	// find the comment with id
+	// compare with userID
+	return nil, false
+}
 
+func GetCommentWithID(commentID uint) (*models.Comment, bool) {
+	return nil, false
 }

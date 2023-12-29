@@ -27,8 +27,7 @@ func CreatePost(context *gin.Context) {
 	}
 
 	authToken := context.GetString("auth-token")
-	token, _, _ := internal.VerifyToken(authToken)
-	userClaims := token.Claims.(jwt.MapClaims)
+	userClaims := internal.GetClaims(authToken)
 	userId := uint(userClaims["UserID"].(float64))
 
 	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
@@ -71,20 +70,19 @@ func CreatePost(context *gin.Context) {
 func GetAllPosts(context *gin.Context) {
 	var posts []models.Post
 
-	internal.DB.Model(&models.Post{}).Preload("Tags").Preload("Comments").Find(&posts)
+	internal.DB.Select([]string{"id", "updated_at", "user_id", "title"}).Find(&posts)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
 		"data": posts,
 	})
-
 }
 
 func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 
 	var post models.Post
-	if err := internal.DB.Model(&models.Post{}).Preload("Tags").First(&post, id).Error; err != nil {
+	if err := internal.DB.Model(&models.Post{}).Preload("Tags").Preload("Comments").First(&post, id).Error; err != nil {
 		context.JSON(http.StatusNotFound, gin.H{
 			"OK":      false,
 			"message": "Not found!",
@@ -171,6 +169,55 @@ func DeletePostById(context *gin.Context) {
 }
 
 func AddComment(context *gin.Context) {
-	// id := context.Param("id")
+	postID := context.Param("id")
+
+	var reqBody struct {
+		Body string
+	}
+
+	if err := context.Bind(&reqBody); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Make sure to put the JSON key as String and no trailing commas",
+		})
+		return
+	}
+
+	var post models.Post
+	if err := internal.DB.Model(&models.Post{}).Preload("Comments").First(&post, postID).Error; err != nil {
+		context.JSON(http.StatusNotFound, gin.H{
+			"OK":      false,
+			"message": "Post not found!",
+		})
+		return
+	}
+
+	// get userID from jwt
+	authToken := context.GetString("auth-token")
+	userClaims := internal.GetClaims(authToken)
+	userId := uint(userClaims["UserID"].(float64))
+
+	// create comment
+	var comment = models.Comment{
+		UserID: userId,
+		PostID: post.ID,
+		Body:   reqBody.Body,
+	}
+
+	post.Comments = append(post.Comments, comment)
+
+	if err := internal.DB.Save(&post).Error; err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{
+			"OK":      false,
+			"message": err,
+		})
+	} else {
+		context.JSON(http.StatusOK, gin.H{
+			"OK":   true,
+			"Post": post,
+		})
+	}
 
 }
+
+func GetComment(context *gin.Context) {}
