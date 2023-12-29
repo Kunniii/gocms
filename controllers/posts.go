@@ -3,7 +3,9 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/Kunniii/gocms/apiModels"
 	"github.com/Kunniii/gocms/internal"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
@@ -82,7 +84,7 @@ func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 
 	var post models.Post
-	if err := internal.DB.Model(&models.Post{}).Preload("Tags").Preload("Comments").First(&post, id).Error; err != nil {
+	if err := internal.DB.Model(&models.Post{}).First(&post, id).Error; err != nil {
 		context.JSON(http.StatusNotFound, gin.H{
 			"OK":      false,
 			"message": "Not found!",
@@ -214,10 +216,38 @@ func AddComment(context *gin.Context) {
 	} else {
 		context.JSON(http.StatusOK, gin.H{
 			"OK":   true,
-			"Post": post,
+			"data": comment,
 		})
 	}
-
 }
 
-func GetComment(context *gin.Context) {}
+func GetComment(context *gin.Context) {
+	postID := context.Param("id")
+	offset := context.Param("offset")
+	var pageNumber int = 0
+	var err error
+
+	if offset != "" {
+		pageNumber, err = strconv.Atoi(offset)
+		if err != nil {
+			context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"OK":      false,
+				"message": "Cannot get that offset!",
+			})
+			return
+		} else {
+			// starts at 1
+			pageNumber -= 1
+		}
+	}
+
+	var comments []apiModels.Comment
+	internal.DB.Model(&models.Comment{}).Where("post_id = ?", postID).Order("id desc").Limit(5).Offset(5 * pageNumber).Find(&comments)
+
+	context.JSON(http.StatusOK, gin.H{
+		"OK":   true,
+		"data": comments,
+	})
+}
+
+func ThisUserLikeThisPost(context *gin.Context) {}

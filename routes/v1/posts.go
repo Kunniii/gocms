@@ -23,7 +23,9 @@ func UsePostsRouter(router *gin.RouterGroup) {
 	router.DELETE("/:id", middlewares.CheckAuth, controllers.DeletePostById)
 
 	router.POST("/:id/comments/", middlewares.CheckAuth, controllers.AddComment)
-	router.GET("/:id/comments/:offset")
+
+	router.GET("/:id/comments/", controllers.GetComment)
+	router.GET("/:id/comments/:offset", controllers.GetComment)
 
 	router.GET("/:id/likes/:offset")
 	router.POST("/:id/likes")
