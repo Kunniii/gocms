@@ -12,6 +12,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// #region Post
+
 func CreatePost(context *gin.Context) {
 
 	var reqBody struct {
@@ -170,6 +172,10 @@ func DeletePostById(context *gin.Context) {
 	}
 }
 
+// #endregion
+
+// #region Comments
+
 func AddComment(context *gin.Context) {
 	postID := context.Param("id")
 
@@ -178,7 +184,7 @@ func AddComment(context *gin.Context) {
 	}
 
 	if err := context.Bind(&reqBody); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"OK":      false,
 			"message": "Make sure to put the JSON key as String and no trailing commas",
 		})
@@ -187,7 +193,7 @@ func AddComment(context *gin.Context) {
 
 	var post models.Post
 	if err := internal.DB.Model(&models.Post{}).Preload("Comments").First(&post, postID).Error; err != nil {
-		context.JSON(http.StatusNotFound, gin.H{
+		context.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"OK":      false,
 			"message": "Post not found!",
 		})
@@ -209,7 +215,7 @@ func AddComment(context *gin.Context) {
 	post.Comments = append(post.Comments, comment)
 
 	if err := internal.DB.Save(&post).Error; err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
+		context.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"OK":      false,
 			"message": err,
 		})
@@ -250,4 +256,4 @@ func GetComment(context *gin.Context) {
 	})
 }
 
-func ThisUserLikeThisPost(context *gin.Context) {}
+// #endregion
