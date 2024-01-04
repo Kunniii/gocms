@@ -9,7 +9,6 @@ import (
 	"github.com/Kunniii/gocms/internal"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // #region Post
@@ -30,6 +29,14 @@ func CreatePost(context *gin.Context) {
 		return
 	}
 
+	if reqBody.Title == "" && reqBody.Body == "" {
+		context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Empty Post",
+		})
+		return
+	}
+
 	authToken := context.GetString("auth-token")
 	userClaims := internal.GetClaims(authToken)
 	userId := uint(userClaims["UserID"].(float64))
@@ -43,7 +50,9 @@ func CreatePost(context *gin.Context) {
 	}
 
 	var tags []models.Tag
-	internal.DB.Find(&tags, reqBody.Tags)
+	if len(reqBody.Tags) > 0 {
+		internal.DB.Find(&tags, reqBody.Tags)
+	}
 
 	var user models.User
 	internal.DB.First(&user, userId)
@@ -65,16 +74,19 @@ func CreatePost(context *gin.Context) {
 		return
 	}
 
+	var apiPost apiModels.Post
+	internal.DB.Model(&models.Post{}).Where("id = ?", post.ID).Find(&apiPost)
+
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
-		"data": post,
+		"data": apiPost,
 	})
 }
 
 func GetAllPosts(context *gin.Context) {
-	var posts []models.Post
+	var posts []apiModels.Post
 
-	internal.DB.Select([]string{"id", "updated_at", "user_id", "title"}).Find(&posts)
+	internal.DB.Model(&models.Post{}).Find(&posts)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
@@ -85,7 +97,7 @@ func GetAllPosts(context *gin.Context) {
 func GetPostById(context *gin.Context) {
 	id := context.Param("id")
 
-	var post models.Post
+	var post apiModels.Post
 	if err := internal.DB.Model(&models.Post{}).First(&post, id).Error; err != nil {
 		context.JSON(http.StatusNotFound, gin.H{
 			"OK":      false,
@@ -117,9 +129,25 @@ func UpdatePost(context *gin.Context) {
 	}
 
 	authToken := context.GetString("auth-token")
-	token, _, _ := internal.VerifyToken(authToken)
-	userClaims := token.Claims.(jwt.MapClaims)
+	userClaims := internal.GetClaims(authToken)
 	if roleId := uint(userClaims["RoleID"].(float64)); roleId < 1 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
+
+	var post models.Post
+	if result := internal.DB.First(&post, id); result.Error != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Not found",
+		})
+		return
+	}
+
+	if userID := uint(userClaims["UserID"].(float64)); userID != post.UserID {
 		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"OK":      false,
 			"message": "Forbidden",
@@ -132,16 +160,6 @@ func UpdatePost(context *gin.Context) {
 		internal.DB.Find(&tags, reqBody.Tags)
 	}
 
-	var post models.Post
-	if result := internal.DB.First(&post, id); result.Error != nil {
-
-		context.JSON(http.StatusBadRequest, gin.H{
-			"OK":      false,
-			"message": "ID not found",
-		})
-		return
-	}
-
 	internal.DB.Model(&post).Updates(models.Post{
 		Title: reqBody.Title,
 		Body:  reqBody.Body,
@@ -151,14 +169,19 @@ func UpdatePost(context *gin.Context) {
 		log.Println(err)
 	}
 
+	var apiPost apiModels.Post
+	internal.DB.Model(&models.Post{}).Where("id = ?", post.ID).Find(&apiPost)
+
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
-		"data": post,
+		"data": apiPost,
 	})
 }
 
 func DeletePostById(context *gin.Context) {
 	id := context.Param("id")
+
+	// TODO: check if post belongs to user
 
 	if result := internal.DB.Delete(&models.Post{}, id); result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -227,7 +250,7 @@ func AddComment(context *gin.Context) {
 	}
 }
 
-func GetComment(context *gin.Context) {
+func GetComments(context *gin.Context) {
 	postID := context.Param("id")
 	offset := context.Param("offset")
 	var pageNumber int = 0
@@ -235,13 +258,15 @@ func GetComment(context *gin.Context) {
 
 	if offset != "" {
 		pageNumber, err = strconv.Atoi(offset)
-		if err != nil {
+		if err != nil || pageNumber < 0 {
 			context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"OK":      false,
 				"message": "Cannot get that offset!",
 			})
 			return
 		} else {
+			// this is for when user input = 1
+			// which means instead of start at 0
 			// starts at 1
 			pageNumber -= 1
 		}
@@ -257,3 +282,109 @@ func GetComment(context *gin.Context) {
 }
 
 // #endregion
+
+// #region Like
+
+func LikePost(context *gin.Context) {
+	postID := context.Param("id")
+
+	authToken := context.GetString("auth-token")
+	userClaims := internal.GetClaims(authToken)
+	userId := uint(userClaims["UserID"].(float64))
+
+	var like models.Like
+
+	internal.DB.Where("user_id = ? AND post_id = ?", userId, postID).Find(&like)
+
+	if like.ID == 0 {
+		var post models.Post
+		internal.DB.Find(&post, postID)
+		like.UserID = userId
+		like.PostID = post.ID
+		post.Likes = append(post.Likes, like)
+		internal.DB.Save(&post)
+
+		context.JSON(http.StatusOK, gin.H{
+			"OK":      true,
+			"message": "Add like",
+		})
+	} else {
+		internal.DB.Where("id = ?", like.ID).Delete(&like)
+		context.JSON(http.StatusOK, gin.H{
+			"OK":      true,
+			"message": "Remove like",
+		})
+	}
+}
+
+func GetLikes(context *gin.Context) {
+	postID := context.Param("id")
+	offset := context.Param("offset")
+	var pageNumber int = 0
+	var err error
+
+	if offset != "" {
+		pageNumber, err = strconv.Atoi(offset)
+		if err != nil || pageNumber < 0 {
+			context.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"OK":      false,
+				"message": "Cannot get that offset!",
+			})
+			return
+		} else {
+			// this is for when user input = 1
+			// which means instead of start at 0
+			// starts at 1
+			pageNumber -= 1
+		}
+	}
+
+	var likes []apiModels.Like
+	internal.DB.Model(&models.Like{}).Where("post_id = ?", postID).Order("id desc").Limit(5).Offset(5 * pageNumber).Find(&likes)
+
+	var total int64
+
+	internal.DB.Model(&models.Like{}).Where("post_id = ?", postID).Count(&total)
+
+	context.JSON(http.StatusOK, gin.H{
+		"OK": true,
+		"data": gin.H{
+			"total": total,
+			"likes": likes,
+		},
+	})
+}
+
+// #endregion
+
+func GetTags(context *gin.Context) {
+	postID := context.Param("id")
+
+	var post models.Post
+
+	if err := internal.DB.First(&post, postID).Error; err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Not found",
+		})
+	} else {
+		// find all id that has post_id = postID, and select tag_id
+		var tagIDs []uint
+		internal.DB.Table("posts_tags").Select("tag_id").Where("post_id = ?", postID).Find(&tagIDs)
+
+		if len(tagIDs) == 0 {
+			context.JSON(http.StatusOK, gin.H{
+				"OK":   true,
+				"data": tagIDs, //because it is 0, return will be an [] array
+			})
+		} else {
+			var tags []apiModels.Tag
+			internal.DB.Model(&models.Tag{}).Order("id desc").Find(&tags, tagIDs)
+
+			context.JSON(http.StatusOK, gin.H{
+				"OK":   true,
+				"data": tags,
+			})
+		}
+	}
+}

@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/Kunniii/gocms/apiModels"
 	"github.com/Kunniii/gocms/internal"
 	"github.com/Kunniii/gocms/models"
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,7 @@ func CreateTag(context *gin.Context) {
 	}
 
 	var tag models.Tag
-	result := internal.DB.First(&tag, "Name = ?", reqBody.Name)
+	result := internal.DB.First(&tag, "name = ?", reqBody.Name)
 
 	if result.Error == nil {
 		context.JSON(http.StatusBadRequest, gin.H{
@@ -57,8 +58,8 @@ func CreateTag(context *gin.Context) {
 }
 
 func GetAllTags(context *gin.Context) {
-	var tags []models.Tag
-	internal.DB.Find(&tags)
+	var tags []apiModels.Tag
+	internal.DB.Model(&models.Tag{}).Find(&tags)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,

@@ -18,6 +18,7 @@ func init() {
 func main() {
 	var dbModels = []interface{}{
 		&models.Comment{},
+		&models.Like{},
 		&models.Post{},
 		&models.Tag{},
 		&models.User{},
