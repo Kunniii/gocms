@@ -8,14 +8,15 @@ import (
 	"github.com/Kunniii/gocms/internal"
 	itypes "github.com/Kunniii/gocms/internal/types"
 	"github.com/Kunniii/gocms/models"
+	v1 "github.com/Kunniii/gocms/routes/v1"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
+	gin.SetMode(gin.ReleaseMode)
 	internal.LoadEnv()
 	internal.ConnectDB()
-}
 
-func main() {
 	var dbModels = []interface{}{
 		&models.Comment{},
 		&models.Like{},
@@ -43,4 +44,10 @@ func main() {
 		RoleID:   itypes.Roles[4].ID,
 	}
 	controllers.CreateAdmin(&adminUser)
+}
+
+func main() {
+	api := v1.NewRouter()
+
+	log.Fatal(api.Run())
 }

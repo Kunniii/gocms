@@ -3,14 +3,36 @@ version: "3"
 services:
   postgres:
     image: postgres:latest
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./_postgres_data:/var/lib/postgresql/data
+
+  gocms:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    # # You can config it here!
+    # environment:
+    #   PORT: ${PORT}
+    #   DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL}
+    #   DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME}
+    #   DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD}
+    #   DB_USER: ${DB_USER}
+    #   DB_PASS: ${DB_PASS}
+    #   DB_NAME: ${DB_NAME}
+    #   DB_TIMEZONE: ${DB_TIMEZONE}
+    #   DB_HOST: ${DB_HOST}
+    #   DB_PORT: ${DB_PORT}
+    #   DB_SSLMODE: ${DB_SSLMODE}
+    #   JWT_KEY: ${JWT_KEY}
     ports:
-      - target: 5432
-        published: ${DB_PORT}
-        protocol: tcp
-        mode: ingress
+      - 3000:3000

@@ -9,7 +9,8 @@ import (
 func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		log.Println("Using current environment variables!")
 	} else {
 		log.Println("Loaded environment variables!")
 	}
