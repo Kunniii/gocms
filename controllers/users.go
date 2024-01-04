@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Kunniii/gocms/apiModels"
 	"github.com/Kunniii/gocms/internal"
 	itypes "github.com/Kunniii/gocms/internal/types"
 	"github.com/Kunniii/gocms/models"
@@ -13,6 +14,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -158,22 +160,16 @@ func Me(context *gin.Context) {
 	authToken := context.GetString("auth-token")
 	token, _, _ := internal.VerifyToken(authToken)
 	userClaims := token.Claims.(jwt.MapClaims)
-	userId := uint(userClaims["UserID"].(float64))
+	userID := uint(userClaims["UserID"].(float64))
 
-	var user models.User
-	internal.DB.Model(&models.User{}).Preload("Posts").First(&user, userId)
+	var user apiModels.User
+	internal.DB.Model(&models.User{}).Preload("Posts", func(db *gorm.DB) *gorm.DB {
+		return db.Model(&models.Post{}).Select("id").Where("user_id = ?", userID)
+	}).First(&user, userID)
 
 	context.JSON(http.StatusOK, gin.H{
-		"OK": true,
-		"User": gin.H{
-			"ID":        user.ID,
-			"CreatedAt": user.CreatedAt,
-			"UpdatedAt": user.UpdatedAt,
-			"UserName":  user.UserName,
-			"Email":     user.Email,
-			"RoleID":    user.RoleID,
-			"Posts":     user.Posts,
-		},
+		"OK":   true,
+		"data": user,
 	})
 
 }

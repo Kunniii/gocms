@@ -1,5 +1,14 @@
 package apiModels
 
+type User struct {
+	ID        uint   `json:"id"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+	UserName  string `json:"username"`
+	Email     string `json:"email"`
+	RoleID    string `json:"roleID"`
+}
+
 type Like struct {
 	UserID    string `json:"userID"`
 	CreatedAt string `json:"createdAt"`
