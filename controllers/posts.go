@@ -181,7 +181,27 @@ func UpdatePost(context *gin.Context) {
 func DeletePostById(context *gin.Context) {
 	id := context.Param("id")
 
-	// TODO: check if post belongs to user
+	var post models.Post
+	if result := internal.DB.First(&post, id); result.Error != nil {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Not found",
+		})
+		return
+	}
+
+	authToken := context.GetString("auth-token")
+	userClaims := internal.GetClaims(authToken)
+	userID := uint(userClaims["UserID"].(float64))
+	roleID := uint(userClaims["RoleID"].(float64))
+	// Owner, Manager, and Admin can delete this post
+	if userID != post.UserID || roleID < 3 {
+		context.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"OK":      false,
+			"message": "Forbidden",
+		})
+		return
+	}
 
 	if result := internal.DB.Delete(&models.Post{}, id); result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{
