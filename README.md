@@ -4,6 +4,14 @@ A headless CMS with PostgreSQL and Golang!
 
 ## How to use?
 
+First, create a `.env` file for the configurations
+
+```sh
+cp sample.env .env
+```
+
+Then edit the `.env` file with your own information.
+
 ### With docker
 
 You can download the image from GHCR
