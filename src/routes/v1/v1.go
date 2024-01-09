@@ -18,5 +18,6 @@ func NewRouter() *gin.Engine {
 	UseUsersRouter(v1.Group("/users"))
 	UseTagRouter(v1.Group("/tags"))
 	UseCommentsRouter(v1.Group("/comments"))
+	UseAdminRouter(v1.Group("/admin"))
 	return router
 }
