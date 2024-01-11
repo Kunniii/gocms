@@ -15,6 +15,8 @@ func UseAdminRouter(router *gin.RouterGroup) {
 		})
 	})
 
-	router.POST("/create-user", middlewares.RequireAdmin, controllers.AddUser)
+	router.POST("/users", middlewares.RequireAdmin, controllers.AddUser)
+	router.GET("/users", middlewares.RequireAdmin, controllers.GetUsers)
+	router.DELETE("/users/:id", middlewares.RequireAdmin, controllers.DeleteUserByID)
 
 }

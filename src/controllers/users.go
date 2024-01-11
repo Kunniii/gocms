@@ -54,6 +54,14 @@ func Register(context *gin.Context) {
 		})
 	}
 
+	if reqBody.UserName == "" || reqBody.Email == "" || reqBody.Password == "" {
+		context.JSON(http.StatusBadRequest, gin.H{
+			"OK":      false,
+			"message": "Missing data!",
+		})
+		return
+	}
+
 	// hash user's password
 	hashByte, err := bcrypt.GenerateFromPassword([]byte(reqBody.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -74,7 +82,7 @@ func Register(context *gin.Context) {
 		RoleID:   itypes.Roles[0].ID,
 	}
 
-	if result := internal.DB.Create(&user); result.Error != nil {
+	if result := internal.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&user); result.Error != nil {
 		err := result.Error
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
