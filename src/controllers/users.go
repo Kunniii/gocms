@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -171,9 +170,7 @@ func Me(context *gin.Context) {
 	userID := uint(userClaims["UserID"].(float64))
 
 	var user apiModels.User
-	internal.DB.Model(&models.User{}).Preload("Posts", func(db *gorm.DB) *gorm.DB {
-		return db.Model(&models.Post{}).Select("id").Where("user_id = ?", userID)
-	}).First(&user, userID)
+	internal.DB.Model(&models.User{}).First(&user, userID)
 
 	context.JSON(http.StatusOK, gin.H{
 		"OK":   true,
