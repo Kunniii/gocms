@@ -10,6 +10,12 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./_postgres_data:/var/lib/postgresql/data
+    ## For testing!
+    # ports:
+    #   - target: 5432
+    #     published: ${DB_PORT}
+    #     protocol: tcp
+    #     mode: ingress
 
   gocms:
     build:
